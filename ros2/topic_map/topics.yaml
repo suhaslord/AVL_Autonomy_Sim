@@ -1,6 +1,9 @@
-# STATUS: draft — freeze only after Jetson inventory
+# STATUS: draft — code-derived from IGVC_ROS2; freeze after live Jetson verification
 version: 0
 status: draft
+source:
+  repository: Paarseus/IGVC_ROS2
+  commit: d40e18aa480f76673b46a379ab7cb4618f279d75
 frame_ids:
   map: map
   odom: odom
@@ -10,19 +13,31 @@ topics:
     name: /cmd_vel
     type: geometry_msgs/msg/Twist
     direction: subscribe
-  odom:
-    name: /odom
+  wheel_odom:
+    name: /wheel_odom
     type: nav_msgs/msg/Odometry
     direction: publish
+  odometry_filtered:
+    name: /odometry/filtered
+    type: nav_msgs/msg/Odometry
+    direction: publish_via_ekf
   imu:
     name: /imu/data
     type: sensor_msgs/msg/Imu
     direction: publish
-  gps:
-    name: /gps/fix
+  gnss:
+    name: /gnss
     type: sensor_msgs/msg/NavSatFix
     direction: publish
   lidar:
     name: /velodyne_points
     type: sensor_msgs/msg/PointCloud2
     direction: publish
+  actuator_command:
+    name: /avros/actuator_command
+    type: avros_msgs/msg/ActuatorCommand
+    direction: optional_subscribe
+  actuator_state:
+    name: /avros/actuator_state
+    type: avros_msgs/msg/ActuatorState
+    direction: optional_publish
