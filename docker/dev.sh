@@ -5,18 +5,22 @@ cd "$(dirname "$0")"
 
 export HOST_UID="$(id -u)"
 export HOST_GID="$(id -g)"
+export DISPLAY="${DISPLAY:-}"
 
 setup_xauth() {
+    [ -n "$DISPLAY" ] || return 0
+    command -v xauth >/dev/null 2>&1 || return 0
+
     local xauth=/tmp/.docker.xauth
     [ -f "$xauth" ] || touch "$xauth"
-    xauth nlist "${DISPLAY}" 2>/dev/null \
+    xauth nlist "$DISPLAY" 2>/dev/null \
         | sed -e 's/^..../ffff/' \
         | xauth -f "$xauth" nmerge - 2>/dev/null || true
     chmod 644 "$xauth"
 }
 
 case "${1:-up}" in
-    build) setup_xauth; docker compose build --progress=plain ;;
+    build) docker compose build --progress=plain ;;
     shell) docker compose exec sim bash ;;
     stop)  docker compose down ;;
     clean) docker compose down -v; echo "Volumes removed." ;;

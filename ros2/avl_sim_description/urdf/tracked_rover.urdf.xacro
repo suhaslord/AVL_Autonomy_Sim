@@ -1,0 +1,113 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="marvin_sim">
+
+  <!--
+    SIM-ONLY PLACEHOLDERS.
+    Replace every value in this block from assets/measurements.md before
+    using the model for validation, controls tuning, or sim-to-real claims.
+  -->
+  <xacro:property name="chassis_length" value="0.80"/>
+  <xacro:property name="chassis_width" value="0.60"/>
+  <xacro:property name="chassis_height" value="0.24"/>
+  <xacro:property name="mass" value="49.0"/>
+  <xacro:property name="track_width" value="0.52"/>
+  <xacro:property name="wheel_radius" value="0.12"/>
+  <xacro:property name="wheel_width" value="0.08"/>
+
+  <material name="dark">
+    <color rgba="0.18 0.18 0.18 1.0"/>
+  </material>
+
+  <link name="base_link">
+    <inertial>
+      <origin xyz="0 0 ${wheel_radius + chassis_height / 2.0}" rpy="0 0 0"/>
+      <mass value="${mass}"/>
+      <inertia
+        ixx="${mass * (chassis_width * chassis_width + chassis_height * chassis_height) / 12.0}"
+        ixy="0" ixz="0"
+        iyy="${mass * (chassis_length * chassis_length + chassis_height * chassis_height) / 12.0}"
+        iyz="0"
+        izz="${mass * (chassis_length * chassis_length + chassis_width * chassis_width) / 12.0}"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 ${wheel_radius + chassis_height / 2.0}" rpy="0 0 0"/>
+      <geometry>
+        <box size="${chassis_length} ${chassis_width} ${chassis_height}"/>
+      </geometry>
+      <material name="dark"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 ${wheel_radius + chassis_height / 2.0}" rpy="0 0 0"/>
+      <geometry>
+        <box size="${chassis_length} ${chassis_width} ${chassis_height}"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <xacro:macro name="drive_wheel" params="side y">
+    <link name="${side}_wheel_link">
+      <inertial>
+        <mass value="2.0"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia ixx="0.02" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.02"/>
+      </inertial>
+      <visual>
+        <geometry>
+          <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
+        </geometry>
+        <origin xyz="0 0 0" rpy="1.57079632679 0 0"/>
+        <material name="dark"/>
+      </visual>
+      <collision>
+        <geometry>
+          <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
+        </geometry>
+        <origin xyz="0 0 0" rpy="1.57079632679 0 0"/>
+      </collision>
+    </link>
+    <joint name="${side}_wheel_joint" type="continuous">
+      <parent link="base_link"/>
+      <child link="${side}_wheel_link"/>
+      <origin xyz="0 ${y} ${wheel_radius}" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <dynamics damping="0.2" friction="0.1"/>
+    </joint>
+  </xacro:macro>
+
+  <xacro:drive_wheel side="left" y="${track_width / 2.0}"/>
+  <xacro:drive_wheel side="right" y="${-track_width / 2.0}"/>
+
+  <xacro:macro name="sensor_frame" params="name">
+    <link name="${name}"/>
+    <joint name="${name}_joint" type="fixed">
+      <parent link="base_link"/>
+      <child link="${name}"/>
+      <!-- TODO measure: intentionally zero until Ryan fills assets/measurements.md -->
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+    </joint>
+  </xacro:macro>
+
+  <xacro:sensor_frame name="velodyne"/>
+  <xacro:sensor_frame name="imu_link"/>
+  <xacro:sensor_frame name="gps_link"/>
+  <xacro:sensor_frame name="zed_left_link"/>
+  <xacro:sensor_frame name="zed_center_link"/>
+  <xacro:sensor_frame name="zed_right_link"/>
+
+  <!-- Gazebo Fortress skid-steer stand-in. Topic names match the draft ROS contract. -->
+  <gazebo>
+    <plugin filename="libignition-gazebo-diff-drive-system.so"
+            name="ignition::gazebo::systems::DiffDrive">
+      <left_joint>left_wheel_joint</left_joint>
+      <right_joint>right_wheel_joint</right_joint>
+      <wheel_separation>${track_width}</wheel_separation>
+      <wheel_radius>${wheel_radius}</wheel_radius>
+      <topic>/cmd_vel</topic>
+      <odom_topic>/odom</odom_topic>
+      <frame_id>odom</frame_id>
+      <child_frame_id>base_link</child_frame_id>
+      <odom_publish_frequency>30</odom_publish_frequency>
+    </plugin>
+  </gazebo>
+
+</robot>
