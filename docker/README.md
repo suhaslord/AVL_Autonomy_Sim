@@ -26,6 +26,8 @@ cd docker
 ./dev.sh build
 ```
 
+Building does **not** require an X11 display or `xauth`; those are only needed when starting the GUI.
+
 Image name: `avl/autonomy-sim:humble`.
 
 ## Start (GUI on the lab GPU machine)
@@ -34,7 +36,7 @@ Image name: `avl/autonomy-sim:humble`.
 ./dev.sh up
 ```
 
-That builds the X auth cookie, starts container `avl-sim`, and drops you into a bash shell with ROS sourced.
+That builds the X auth cookie when a display is available, starts container `avl-sim`, and drops you into a bash shell with ROS sourced.
 
 More terminals into the same container:
 
