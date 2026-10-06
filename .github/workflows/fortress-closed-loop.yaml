@@ -35,10 +35,10 @@ jobs:
           source /opt/ros/humble/setup.bash
           source install/setup.bash
           mkdir -p artifacts
-          ros2 launch avl_description sim.launch.py gui:=false > artifacts/sim.log 2>&1 &
+          timeout --signal=TERM --kill-after=5s 100s ros2 launch avl_description sim.launch.py gui:=false > artifacts/sim.log 2>&1 &
           sim_pid=$!
-          trap 'kill -INT "$sim_pid" 2>/dev/null || true; wait "$sim_pid" || true' EXIT
-          ros2 run avl_description check_closed_loop.py --drive-sim --timeout 60 | tee artifacts/closed-loop.json
+          trap 'kill -TERM "$sim_pid" 2>/dev/null || true; wait "$sim_pid" || true' EXIT
+          timeout --signal=TERM --kill-after=5s 75s ros2 run avl_description check_closed_loop.py --drive-sim --timeout 60 | tee artifacts/closed-loop.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
